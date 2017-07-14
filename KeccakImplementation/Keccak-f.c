@@ -3,6 +3,8 @@ Nella seguente implementazione di Keccak-f vengono usati i prametri standard deg
     l = 6 --> b = 1600 --> #round = 24
     egue che r + c deve essere 1600 e per comodità assumiamo che r sia multiplo di 8bit
 Quindi al momento lo stato è rappresentato da una matrice 5x5 di uint64_t, che in alcune situazioni (tipo l'input e l'output) verrà utilizzato come 200 byte consecutivi di caratteri ASCII.
+IMPORTANTISSIMOOOO: La rappresetazione (a parte combinare in modo strano gli indici che non ci interessa) ha le Righe chiamate Y e le colonne chiamate X,
+Quindi state[i][j] rappresenta la riga j e colonna i della matrice
 */
 
 #include <stdint.h>
@@ -12,10 +14,84 @@ Quindi al momento lo stato è rappresentato da una matrice 5x5 di uint64_t, che 
 
 typedef unsigned int uint;
 
+//Lookup table per le rotazioni di Rho
+uint64_t rotOffset[5][5] = {//DA CAMBIARE PER L'ORIENTAMENTO
+    {0,1,62,28,27},
+    {36,44,6,55,20},
+    {3,10,43,25,39},
+    {41,45,15,21,8},
+    {18,2,61,56,14}
+};
+
+uint64_t roundConstant[24] = {
+    0x0000000000000001, 0x0000000000008082,
+    0x800000000000808A, 0x8000000080008000,
+    0x000000000000808B, 0x0000000080000001,
+    0x8000000080008081, 0x8000000000008009,
+    0x000000000000008A, 0x0000000000000088,
+    0x0000000080008009, 0x000000008000000A,
+    0x000000008000808B, 0x800000000000008B,
+    0x8000000000008089, 0x8000000000008003,
+    0x8000000000008002, 0x8000000000000080,
+    0x000000000000800A, 0x800000008000000A,
+    0x8000000080008081, 0x8000000000008080,
+    0x0000000080000001, 0x8000000080008008
+};
+
+uint64_t rotLeft(uint64_t x, int n) {
+  return ((x << n) | (x >> (32 - n)));
+}
+
+void Keccak_f(uint64_t state[5][5], int round){
+
+    int i,j,k;
+
+    //Theta
+    uint64_t col1,col2;
+    col1=col2=0;
+    for(i=0;i<5;i++){
+        for(j=0;j<5;j++){
+            //parità della colonna con x+1 y' e z-1
+            for(k=0;k<5;k++){
+                col1 ^= state[k][(i+1)%5];
+            }
+            //rotazione per ottenere z-1
+            col1 = rotLeft(col1,1);
+            //parità della colonna con x-1 y' e z
+            for(k=0;k<5;k++){
+                col2 ^= state[k][(i-1+5)%5]; //è stato aggiunto il +5 perchè in C l'operatore % è il resto e non il modulo...
+            }
+            state[j][i] ^= col1 ^ col2;
+        }
+    }
+
+    //Rho
+    for(i=0;i<5;i++)
+        for(j=0;j<5;j++)
+            state[j][i] = rotLeft(state[j][i], rotOffset[j][i]);
+
+    //Pi
+    uint64_t temp_state[5][5];
+
+    for(i=0;i<5;i++)
+        for(j=0;j<5;j++)
+            temp_state[(i*2 + 3*j)%5][j] = state[j][i];
+
+    memcpy(state, temp_state, sizeof(temp_state));
+
+    //Chi
+    for(i=0;i<5;i++)
+        for(j=0;j<5;j++)
+            state[j][i] = state[j][i] ^ ((~state[j][(i+1)%5]) & state[j][(i+2)%5]);
+
+    //Iota
+    state[0][0] ^= roundConstant[round];
+}
+
 void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutputLen){
 
     uint64_t state[5][5];
-    int i;
+    int i,j;
 
     if(r >= 1600 || r % 8 != 0){
         printf("Il bitrate deve essere minore di 1600 e multiplo di 8 bit!\n");
@@ -31,16 +107,12 @@ void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutpu
     unsigned char *paddedInput = malloc(paddedInputLen);
     unsigned char *padding = malloc(padSize);
 
-    /*DEBUG PRINTF
-    printf("Il messaggio in input e': %s\n", input);
-    printf("Quindi la lunghezza dell'input e': %dbyte == %dbit\n", inputLen, inputLen*8);
-    printf("Visto che il bitrate e' %dbit, il padding sarà lungo %dbyte == %dbit\n", r, padSize, padSize*8);*/
-
     //nel caso ci sia un solo bit di padding padding = 10000001 = 0x81
+    //EDIT: il padding viene modificato in 1010*1 per la condizione strana di SHA3
     if(padSize == 1)
-        padding[0] = (char) 0x81;
+        padding[0] = (char) 0xA1;
     else{
-        padding[0] = (char) 0x80;
+        padding[0] = (char) 0xA0;
         for(i=1; i<padSize-1; i++){
             padding[i] = (char) 0x0;
         }
@@ -50,22 +122,25 @@ void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutpu
     memcpy(paddedInput, input, inputLen);
     memcpy((paddedInput+inputLen), padding, padSize);
 
-    /*DEBUG PRINTF
-    printf("Padding: ");
-    for(i=0;i<padSize;i++)
-        printf("0x%02hhx ", padding[i]);
-    printf("\n");
+    //Fase di Assorbimento
+    //Per ogni blocco di input da r bit disponibile
+    for(i=0; i<paddedInputLen/(r/8); i++){
+        memcpy(state,(paddedInput+(r/8)*i),r/8);
+        for(j=0;j<24;j++){
+            Keccak_f(state, j);
+        }
+    }
 
-    printf("PaddedInput:\n");
-    for(i=0;i<paddedInputLen;i++)
-        printf("%d: %02hhx\n", i, paddedInput[i]);
-    printf("\n");*/
-    
+    //Fase di squeezing abbozzata
+    char preoutput[r];
+    memcpy(preoutput, state, r/8);
+    memcpy(output, preoutput, requiredOutputLen/8);
+
 }
 
 int main(){
 
-    int rate;
+    int rate,outlen,i;
     char input[1024]; //per il momento funziona con al massimo 1024 caratteri in input
 
     printf("Inserisci messaggio in input: ");
@@ -74,7 +149,16 @@ int main(){
     printf("Inserisci rate r: ");
     scanf("%d", &rate);
 
-    Keccak(rate, input, strlen(input), NULL, -1);
+    printf("Inserisci lunghezza output richiesta: ");
+    scanf("%d", &outlen);
+
+    char *output = malloc(outlen);
+
+    Keccak(rate, input, strlen(input), output, outlen);
+
+    for(i=0;i<outlen/8;i++)
+        printf("%02hhx",output[i]);
+    printf("\n");
 
     return 0;
 }
