@@ -85,7 +85,7 @@ void Keccak_f(uint64_t state[5][5], int round){
     state[0][0] ^= roundConstant[round];
 }
 
-void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutputLen){
+void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutputLen, uint SHA3PAD){
 
     uint64_t state[5][5];
     int i,j;
@@ -98,67 +98,111 @@ void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutpu
     //Inizializzazione stato a 0
     memset(state, 0, sizeof(state));
 
-    //Padding
-    int padSize = ((r - inputLen*8 % r)%r)/8;
-    int paddedInputLen = inputLen + padSize;
-    unsigned char *paddedInput = calloc(paddedInputLen,1);
-    unsigned char *padding = calloc(padSize,1);
+    //PADDING
+    int padSize, paddedInputLen;
+    unsigned char *paddedInput;
+    unsigned char *padding;
 
-    /*DEBUG PRINTF PER PADDING
-    printf("Il messaggio in input e': %s\n", input);
-    printf("Quindi la lunghezza dell'input e': %dbyte == %dbit\n", inputLen, inputLen*8);
-    printf("Visto che il bitrate e' %dbit, il padding sarà lungo %dbyte == %dbit\n", r, padSize, padSize*8);*/
+    padSize = ((r - inputLen*8 % r)%r)/8;
+
+    //Se il padSize è 0 significa che:
+    //  -il blocco in input è vuoto
+    //  -il blocco in input è di esattamente r bit
+    //In ogni caso quello che devo fare è aggiungere un intero blocco di r bit di padding
+    if(padSize == 0)
+        padSize = r/8;
+    paddedInputLen = inputLen + padSize;
+    paddedInput = calloc(paddedInputLen,1);
+    padding = calloc(padSize,1);
 
     if(padSize == 1)
-        padding[0] = 0x86;
+        padding[0] = SHA3PAD?0x86:0x81;
     else{
-        padding[0] = 0x06;
+        padding[0] = SHA3PAD?0x06:0x80;
         for(i=1; i<padSize-1; i++){
             padding[i] = 0x00;
         }
-        padding[padSize-1] = 0x80;
+        padding[padSize-1] = SHA3PAD?0x80:0x01;
     }
 
     memcpy(paddedInput, input, inputLen);
     memcpy((paddedInput+inputLen), padding, padSize);
 
-    //Fase di Assorbimento
-    //Per ogni blocco di input da r bit disponibile
+    //FASE DI ASSORBIMENTO
     for(i=0; i<paddedInputLen/(r/8); i++){
-        memcpy(state,(paddedInput+(r/8)*i),r/8);
+        for(j=0;j<r/8;j++){
+            ((char *)state)[j] ^= (paddedInput+(r/8)*i)[j];
+        }
         for(j=0;j<24;j++){
             Keccak_f(state, j);
         }
     }
+    //FASE DI SQUEEZING
+    while(requiredOutputLen > 0){
+        if(requiredOutputLen > r/8){
+            memcpy(output, state, r/8);
+            output += r/8;
+            requiredOutputLen -= r/8;
+            for(j=0;j<24;j++){
+                Keccak_f(state, j);
+            }
+        }
+        else{
+            memcpy(output, state, requiredOutputLen);
+            requiredOutputLen = 0;
+        }
+    }
+}
 
-    //Fase di squeezing abbozzata
-    char preoutput[r];
-    memcpy(preoutput, state, r/8);
-    memcpy(output, preoutput, requiredOutputLen/8);
+void SHA3_224(char *input, uint inputLen, char *output){
+    Keccak(1152, input, inputLen, output, 224/8, 1);
+}
 
+void SHA3_256(char *input, uint inputLen, char *output){
+    Keccak(1088, input, inputLen, output, 256/8, 1);
+}
+
+void SHA3_384(char *input, uint inputLen, char *output){
+    Keccak(832, input, inputLen, output, 384/8, 1);
+}
+
+void SHA3_512(char *input, uint inputLen, char *output){
+    Keccak(576, input, inputLen, output, 512/8, 1);
 }
 
 int main(){
 
-    int rate=1088,outlen=256,i;
+    int i;
     char input[1024]; //per il momento funziona con al massimo 1024 caratteri in input
 
-    printf("Inserisci messaggio in input di SHA3: ");
-    gets(input); //apertissimi ai buffer overrun, cazzomene
+    printf("Inserisci messaggio in input: ");
+    gets(input);
 
-    /*printf("Inserisci rate r: ");
-    scanf("%d", &rate);
+    char *output = malloc(64);
 
-    printf("Inserisci lunghezza output richiesta: ");
-    scanf("%d", &outlen);
-    */
-    char *output = malloc(outlen);
-
-    Keccak(rate, input, strlen(input), output, outlen);
-
-    for(i=0;i<outlen/8;i++)
+    printf("SHA3_224:\n");
+    SHA3_224(input, strlen(input), output);
+    for(i=0;i<224/8;i++)
         printf("%02hhx",output[i]);
-    printf("\n");
+    printf("\n\n");
+
+    printf("SHA3_256:\n");
+    SHA3_256(input, strlen(input), output);
+    for(i=0;i<256/8;i++)
+        printf("%02hhx",output[i]);
+    printf("\n\n");
+
+    printf("SHA3_384:\n");
+    SHA3_384(input, strlen(input), output);
+    for(i=0;i<384/8;i++)
+        printf("%02hhx",output[i]);
+    printf("\n\n");
+
+    printf("SHA3_512:\n");
+    SHA3_512(input, strlen(input), output);
+    for(i=0;i<512/8;i++)
+        printf("%02hhx",output[i]);
+    printf("\n\n");
 
     return 0;
 }
