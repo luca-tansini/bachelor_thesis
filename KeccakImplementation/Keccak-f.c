@@ -42,7 +42,7 @@ uint64_t rotLeft(uint64_t x, int n) {
 
 void Keccak_f(uint64_t state[5][5], int round){
 
-    int i,j,k;
+    int i,j;
 
     //Theta
     uint64_t par[5],rot[5];
@@ -64,75 +64,31 @@ void Keccak_f(uint64_t state[5][5], int round){
         }
     }
 
-    printf("Finita Theta:\n");
-    for(k=0;k<5;k++){
-        for (j=0;j<5;j++)
-            printf("%lu ", state[k][j]);
-        printf("\n");
-    }
-    printf("\n");
-
     //Rho
     for(i=0;i<5;i++)
         for(j=0;j<5;j++)
             state[i][j] = rotLeft(state[i][j], rotOffset[i][j]);
-
-    printf("Finita Rho:\n");
-    for(k=0;k<5;k++){
-        for (j=0;j<5;j++)
-            printf("%lu ", state[k][j]);
-        printf("\n");
-    }
-    printf("\n");
 
     //Pi
     uint64_t temp_state[5][5];
 
     for(i=0;i<5;i++)
         for(j=0;j<5;j++)
-            temp_state[j][(i*2 + 3*j)%5] = state[i][j];
-
-    memcpy(state, temp_state, sizeof(temp_state));
-
-    printf("Finita Pi:\n");
-    for(k=0;k<5;k++){
-        for (j=0;j<5;j++)
-            printf("%lu ", state[k][j]);
-        printf("\n");
-    }
-    printf("\n");
+            temp_state[(i*2 + 3*j)%5][j] = state[j][i];
 
     //Chi
     for(i=0;i<5;i++)
         for(j=0;j<5;j++)
-            state[i][j] = state[i][j] ^ ((~state[(i+1)%5][j]) & state[(i+2)%5][j]);
-
-    printf("Finita Chi:\n");
-    for(k=0;k<5;k++){
-        for (j=0;j<5;j++)
-            printf("%lu ", state[k][j]);
-        printf("\n");
-    }
-    printf("\n");
+            state[i][j] = temp_state[i][j] ^ ((~temp_state[i][(j+1)%5]) & temp_state[i][(j+2)%5]);
 
     //Iota
     state[0][0] ^= roundConstant[round];
-
-    printf("Finita Iota:\n");
-    for(k=0;k<5;k++){
-        for (j=0;j<5;j++)
-            printf("%lu ", state[k][j]);
-        printf("\n");
-    }
-    printf("\n");
-    sleep(10000);
-
 }
 
 void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutputLen){
 
     uint64_t state[5][5];
-    int i,j,k;
+    int i,j;
 
     if(r >= 1600 || r % 8 != 0){
         printf("Il bitrate deve essere minore di 1600 e multiplo di 8 bit!\n");
@@ -148,7 +104,7 @@ void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutpu
     unsigned char *paddedInput = calloc(paddedInputLen,1);
     unsigned char *padding = calloc(padSize,1);
 
-    /*DEBUG PRINTF
+    /*DEBUG PRINTF PER PADDING
     printf("Il messaggio in input e': %s\n", input);
     printf("Quindi la lunghezza dell'input e': %dbyte == %dbit\n", inputLen, inputLen*8);
     printf("Visto che il bitrate e' %dbit, il padding sarà lungo %dbyte == %dbit\n", r, padSize, padSize*8);*/
@@ -170,22 +126,6 @@ void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutpu
     //Per ogni blocco di input da r bit disponibile
     for(i=0; i<paddedInputLen/(r/8); i++){
         memcpy(state,(paddedInput+(r/8)*i),r/8);
-        //DEBUG
-        /*unsigned char prova[200];
-        memcpy(prova,state,200);
-        for (j=0;j<200;j++){
-            if(j%8==0)
-			         printf("\n");
-            printf("%02hhx ", prova[j]);
-        }
-        printf("\n");*/
-
-        for(k=0;k<5;k++){
-            for (j=0;j<5;j++)
-                printf("%lu ", state[k][j]);
-            printf("\n");
-        }
-        //END DEBUG
         for(j=0;j<24;j++){
             Keccak_f(state, j);
         }
@@ -200,18 +140,18 @@ void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutpu
 
 int main(){
 
-    int rate,outlen,i;
+    int rate=1088,outlen=256,i;
     char input[1024]; //per il momento funziona con al massimo 1024 caratteri in input
 
-    printf("Inserisci messaggio in input: ");
+    printf("Inserisci messaggio in input di SHA3: ");
     gets(input); //apertissimi ai buffer overrun, cazzomene
 
-    printf("Inserisci rate r: ");
+    /*printf("Inserisci rate r: ");
     scanf("%d", &rate);
 
     printf("Inserisci lunghezza output richiesta: ");
     scanf("%d", &outlen);
-
+    */
     char *output = malloc(outlen);
 
     Keccak(rate, input, strlen(input), output, outlen);
