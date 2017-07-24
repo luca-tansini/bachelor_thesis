@@ -71,7 +71,6 @@ void Keccak_f(uint64_t state[5][5], int round){
 
     //Pi
     uint64_t temp_state[5][5];
-
     for(i=0;i<5;i++)
         for(j=0;j<5;j++)
             temp_state[(i*2 + 3*j)%5][j] = state[j][i];
@@ -115,14 +114,16 @@ void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutpu
     paddedInput = calloc(paddedInputLen,1);
     padding = calloc(padSize,1);
 
+    //Il padding di SHA3 dato dal Nist dovrebbe essere in poch parole M||01||10*1
+    //Nel caso di un solo byte: 01100001 --> 0x61. Qui entra in gioco il bit ordeing: il byte 0x61 viene scritto in memoria a partire dal bit meno significativo 10000110 e il C lo legge come 0x61, ma io voglio la stringa di bit esatta, quindi devo girarlo al contrario come 0x86.
     if(padSize == 1)
         padding[0] = SHA3PAD?0x86:0x81;
     else{
-        padding[0] = SHA3PAD?0x06:0x80;
+        padding[0] = SHA3PAD?0x06:0x01;
         for(i=1; i<padSize-1; i++){
             padding[i] = 0x00;
         }
-        padding[padSize-1] = SHA3PAD?0x80:0x01;
+        padding[padSize-1] = 0x80;
     }
 
     memcpy(paddedInput, input, inputLen);
@@ -170,6 +171,22 @@ void SHA3_512(char *input, uint inputLen, char *output){
     Keccak(576, input, inputLen, output, 512/8, 1);
 }
 
+void Keccak_224(char *input, uint inputLen, char *output){
+    Keccak(1152, input, inputLen, output, 224/8, 0);
+}
+
+void Keccak_256(char *input, uint inputLen, char *output){
+    Keccak(1088, input, inputLen, output, 256/8, 0);
+}
+
+void Keccak_384(char *input, uint inputLen, char *output){
+    Keccak(832, input, inputLen, output, 384/8, 0);
+}
+
+void Keccak_512(char *input, uint inputLen, char *output){
+    Keccak(576, input, inputLen, output, 512/8, 0);
+}
+
 int main(){
 
     int i;
@@ -200,6 +217,30 @@ int main(){
 
     printf("SHA3_512:\n");
     SHA3_512(input, strlen(input), output);
+    for(i=0;i<512/8;i++)
+        printf("%02hhx",output[i]);
+    printf("\n\n");
+
+    printf("Keccak_224:\n");
+    Keccak_224(input, strlen(input), output);
+    for(i=0;i<224/8;i++)
+        printf("%02hhx",output[i]);
+    printf("\n\n");
+
+    printf("Keccak_256:\n");
+    Keccak_256(input, strlen(input), output);
+    for(i=0;i<256/8;i++)
+        printf("%02hhx",output[i]);
+    printf("\n\n");
+
+    printf("Keccak_384:\n");
+    Keccak_384(input, strlen(input), output);
+    for(i=0;i<384/8;i++)
+        printf("%02hhx",output[i]);
+    printf("\n\n");
+
+    printf("Keccak_512:\n");
+    Keccak_512(input, strlen(input), output);
     for(i=0;i<512/8;i++)
         printf("%02hhx",output[i]);
     printf("\n\n");
