@@ -1,7 +1,7 @@
 /*
 Nella seguente implementazione di Keccak-f vengono usati i prametri standard degli algoritmi SHA3 del NIST:
     l = 6 --> b = 1600 --> #round = 24
-    egue che r + c deve essere 1600 e per comodità assumiamo che r sia multiplo di 8bit
+    segue che r + c deve essere 1600 e per comodità assumiamo che r sia multiplo di 8bit
 Quindi al momento lo stato è rappresentato da una matrice 5x5 di uint64_t, che in alcune situazioni (tipo l'input e l'output) verrà utilizzato come 200 byte consecutivi di caratteri ASCII.
 */
 
@@ -13,7 +13,7 @@ Quindi al momento lo stato è rappresentato da una matrice 5x5 di uint64_t, che 
 typedef unsigned int uint;
 
 //Lookup table per le rotazioni di Rho
-uint64_t rotOffset[5][5] = {
+int rotOffset[5][5] = {
     {0,1,62,28,27},
     {36,44,6,55,20},
     {3,10,43,25,39},
@@ -40,11 +40,9 @@ uint64_t rotLeft(uint64_t x, int n) {
   return ((x << n) | (x >> (64 - n)));
 }
 
-void Keccak_f(uint64_t state[5][5], int round){
-
+void Keccak_f_Theta(uint64_t state[5][5]){
     int i,j;
 
-    //Theta
     uint64_t par[5],rot[5];
     //Precomputo la parità di tutte le colonne in par
     for(i=0;i<5;i++){
@@ -52,7 +50,6 @@ void Keccak_f(uint64_t state[5][5], int round){
         for(j=0;j<5;j++)
             par[i] ^= state[j][i];
     }
-
     //Precomputo la rotazione di tutte le colonne in rot
     for(i=0;i<5;i++){
         rot[i] = rotLeft(par[i],1);
@@ -63,25 +60,53 @@ void Keccak_f(uint64_t state[5][5], int round){
             state[j][i] ^= rot[(i+1)%5] ^ par[(i-1+5)%5];
         }
     }
+}
 
-    //Rho
+void Keccak_f_Rho(uint64_t state[5][5]){
+    int i,j;
     for(i=0;i<5;i++)
         for(j=0;j<5;j++)
             state[i][j] = rotLeft(state[i][j], rotOffset[i][j]);
+}
+
+void Keccak_f_Pi(uint64_t state[5][5]){
+    int i,j;
+    uint64_t tempState[5][5];
+    for(i=0;i<5;i++)
+        for(j=0;j<5;j++)
+            tempState[(i*2 + 3*j)%5][j] = state[j][i];
+    memcpy(state,tempState,200);
+}
+
+void Keccak_f_Chi(uint64_t state[5][5]){
+    int i,j;
+    uint64_t tempState[5][5];
+    for(i=0;i<5;i++)
+        for(j=0;j<5;j++)
+            tempState[i][j] = state[i][j] ^ ((~state[i][(j+1)%5]) & state[i][(j+2)%5]);
+    memcpy(state,tempState,200);
+}
+
+void Keccak_f_Iota(uint64_t state[5][5], int round){
+    state[0][0] ^= roundConstant[round];
+}
+
+void Keccak_f(uint64_t state[5][5], int round){
+
+    //Theta
+    Keccak_f_Theta(state);
+
+    //Rho
+    Keccak_f_Rho(state);
 
     //Pi
-    uint64_t temp_state[5][5];
-    for(i=0;i<5;i++)
-        for(j=0;j<5;j++)
-            temp_state[(i*2 + 3*j)%5][j] = state[j][i];
+    Keccak_f_Pi(state);
 
     //Chi
-    for(i=0;i<5;i++)
-        for(j=0;j<5;j++)
-            state[i][j] = temp_state[i][j] ^ ((~temp_state[i][(j+1)%5]) & temp_state[i][(j+2)%5]);
+    Keccak_f_Chi(state);
 
     //Iota
-    state[0][0] ^= roundConstant[round];
+    Keccak_f_Iota(state,round);
 }
 
 void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutputLen, uint SHA3PAD){
@@ -187,63 +212,19 @@ void Keccak_512(char *input, uint inputLen, char *output){
     Keccak(576, input, inputLen, output, 512/8, 0);
 }
 
-int main(){
-
-    int i;
-    char input[1024]; //per il momento funziona con al massimo 1024 caratteri in input
-
-    printf("Inserisci messaggio in input: ");
-    gets(input);
-
-    char *output = malloc(64);
-
-    printf("SHA3_224:\n");
-    SHA3_224(input, strlen(input), output);
-    for(i=0;i<224/8;i++)
-        printf("%02hhx",output[i]);
-    printf("\n\n");
-
-    printf("SHA3_256:\n");
-    SHA3_256(input, strlen(input), output);
-    for(i=0;i<256/8;i++)
-        printf("%02hhx",output[i]);
-    printf("\n\n");
-
-    printf("SHA3_384:\n");
-    SHA3_384(input, strlen(input), output);
-    for(i=0;i<384/8;i++)
-        printf("%02hhx",output[i]);
-    printf("\n\n");
-
-    printf("SHA3_512:\n");
-    SHA3_512(input, strlen(input), output);
-    for(i=0;i<512/8;i++)
-        printf("%02hhx",output[i]);
-    printf("\n\n");
-
-    printf("Keccak_224:\n");
-    Keccak_224(input, strlen(input), output);
-    for(i=0;i<224/8;i++)
-        printf("%02hhx",output[i]);
-    printf("\n\n");
-
-    printf("Keccak_256:\n");
-    Keccak_256(input, strlen(input), output);
-    for(i=0;i<256/8;i++)
-        printf("%02hhx",output[i]);
-    printf("\n\n");
-
-    printf("Keccak_384:\n");
-    Keccak_384(input, strlen(input), output);
-    for(i=0;i<384/8;i++)
-        printf("%02hhx",output[i]);
-    printf("\n\n");
-
-    printf("Keccak_512:\n");
-    Keccak_512(input, strlen(input), output);
-    for(i=0;i<512/8;i++)
-        printf("%02hhx",output[i]);
-    printf("\n\n");
-
-    return 0;
+void PrintState(uint64_t state[5][5]){
+    int i,j;
+    for(i=0;i<86;i++)
+        printf("_");
+    printf("\n");
+    for(i=0;i<5;i++){
+        printf("|");
+        for (j=0;j<5;j++){
+            printf("%016lX|", state[i][j]);
+        }
+        printf("\n");
+    }
+    for(i=0;i<86;i++)
+        printf("¯");
+    printf("\n");
 }
