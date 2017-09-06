@@ -4,7 +4,7 @@
 int main(int argc, char const *argv[]) {
 
     uint64_t state[5][5];
-    int i,j;
+    int i,j,weight,revWeight;
     int backwardExtended;
     FILE *fp;
 
@@ -34,6 +34,8 @@ int main(int argc, char const *argv[]) {
     }
     printf("b0(before χ0):\n");
     PrintTrailState(state);
+    getStateWeights(state,&weight,&revWeight);
+    printf("peso: %d\n\n", weight);
     printf("a1(before λ1):\n");
     PrintTrailState(state);
     Keccak_f_Theta(state);
@@ -41,6 +43,8 @@ int main(int argc, char const *argv[]) {
     Keccak_f_Pi(state);
     printf("b1(before χ1):\n");
     PrintTrailState(state);
+    getStateWeights(state,&weight,&revWeight);
+    printf("peso: %d\n\n", weight);
     printf("a2(before λ2):\n");
     PrintTrailState(state);
     Keccak_f_Theta(state);
@@ -48,6 +52,8 @@ int main(int argc, char const *argv[]) {
     Keccak_f_Pi(state);
     printf("b2(before χ2):\n");
     PrintTrailState(state);
+    getStateWeights(state,&weight,&revWeight);
+    printf("peso: %d\n\n", weight);
 
     return 0;
 }
