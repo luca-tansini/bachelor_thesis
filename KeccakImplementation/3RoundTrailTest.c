@@ -1,4 +1,5 @@
 #include "Keccak-f.c"
+#include "KeccakTools.c"
 
 int main(int argc, char const *argv[]) {
 
@@ -26,27 +27,27 @@ int main(int argc, char const *argv[]) {
     //Apllico i 3 round, tranne Chi che viene considerata identità e Iota che non fa nulla e vedo cosa succede
     if(backwardExtended){
         printf("a0(before λ0):\n");
-        PrintState(state);
+        PrintTrailState(state);
         Keccak_f_Theta(state);
         Keccak_f_Rho(state);
         Keccak_f_Pi(state);
     }
     printf("b0(before χ0):\n");
-    PrintState(state);
+    PrintTrailState(state);
     printf("a1(before λ1):\n");
-    PrintState(state);
+    PrintTrailState(state);
     Keccak_f_Theta(state);
     Keccak_f_Rho(state);
     Keccak_f_Pi(state);
     printf("b1(before χ1):\n");
-    PrintState(state);
+    PrintTrailState(state);
     printf("a2(before λ2):\n");
-    PrintState(state);
+    PrintTrailState(state);
     Keccak_f_Theta(state);
     Keccak_f_Rho(state);
     Keccak_f_Pi(state);
     printf("b2(before χ2):\n");
-    PrintState(state);
+    PrintTrailState(state);
 
     return 0;
 }
