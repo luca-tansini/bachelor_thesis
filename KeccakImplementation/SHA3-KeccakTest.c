@@ -3,7 +3,7 @@
 int main(){
 
     int i;
-    char input[1024]; //per il momento funziona con al massimo 1024 caratteri in input
+    char input[1024]; //massimo 1024 caratteri in input
 
     printf("Inserisci messaggio in input: ");
     gets(input);
