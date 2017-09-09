@@ -49,16 +49,16 @@ void PrintTrailState(uint64_t state[5][5]){
 //Per quanto riguarda la coordinata z ricorda che il bit più significativo dei 64 è quello con z=0
 void getRow(uint64_t state[5][5], int y, int z, uint64_t *row){
 
-    int i;
+    int x;
     *row = 0x0UL;
     uint64_t tmp;
 
     if(y<0 || y>4 || z<0 || z>63)
         return;
 
-    for(i=0;i<5;i++){
-        tmp = ((state[y][i] & (0x1UL << (63-z))) >> (63-z));
-        *row ^= tmp << (4-i);
+    for(x=0;x<5;x++){
+        tmp = ((state[y][x] & (0x1UL << (63-z))) >> (63-z));
+        *row ^= tmp << (4-x);
     }
 }
 

@@ -3,6 +3,52 @@ Nella seguente implementazione di Keccak-f vengono usati i prametri standard deg
     l = 6 --> b = 1600 --> #round = 24
     segue che r + c deve essere 1600 e per comodità assumiamo che r sia multiplo di 8bit
 Quindi al momento lo stato è rappresentato da una matrice 5x5 di uint64_t, che in alcune situazioni (tipo l'input e l'output) verrà utilizzato come 200 byte consecutivi di caratteri ASCII.
+
+
+***********************************************
+VISUALIZZAZIONE DEL MESSAGGIO NELLA MATRICE:  *
+(Tralasciando l'asse z)                       *
+Messaggio M = 0,1,2,3,4,5,6,7,8,9,A,B,C,...,O *
+                                              *
+A[x][y] = M[5y + x]:                          *
+                                              *
+M[0] = A[0][0] = 0;                           *
+M[1] = A[1][0] = 1;                           *
+M[2] = A[2][0] = 2;                           *
+     .                                        *
+     .                                        *
+M[17]= A[2][3] = H;                           *
+     .                                        *
+     .                                        *
+M[24]= A[4][4] = O;                           *
+                                              *
+A:                                            *
+                          w=64                *
+                        /                     *
+                      3                       *
+                    2                         *
+    y           ↗ 1                           *
+    ↓          z0                             *
+    0 0 1 2 3 4                               *
+    1 5 6 7 8 9                               *
+    2 A B C D E                               *
+    3 F G H I J                               *
+    4 K L M N O                               *
+    x→0 1 2 3 4                               *
+                                              *
+***********************************************
+IMPORTANTE: Nella rappresentazione della matrice che ho scelto in C, risulta più comodo vedere lo stato memorizzato per colonne cioè scambiare x e y:
+
+A[x][y] = state[y][x];
+
+Questo perchè in c un vettore bidimensionale A[5][5] viene salvato in memoria come:
+
+    A[0][0],A[0][1],A[0][2],A[0][3],A[0][4],
+    A[1][0],A[1][1],A[1][2],A[1][3],A[1][4],
+    .
+    .
+    A[4][0],A[4][1],A[4][2],A[4][3],A[4][4]
+
 */
 
 #include <stdint.h>
@@ -40,50 +86,52 @@ uint64_t rotLeft(uint64_t x, int n) {
   return ((x << n) | (x >> (64 - n)));
 }
 
+//In theta lavoro per colonne, quindi ciclo prima su x
 void Keccak_f_Theta(uint64_t state[5][5]){
-    int i,j;
+    int y,x;
 
     uint64_t par[5],rot[5];
     //Precomputo la parità di tutte le colonne in par
-    for(i=0;i<5;i++){
-        par[i] = 0;
-        for(j=0;j<5;j++)
-            par[i] ^= state[j][i];
+    for(x=0;x<5;x++){
+        par[x] = 0;
+        for(y=0;y<5;y++)
+            par[x] ^= state[y][x];
     }
     //Precomputo la rotazione di tutte le colonne in rot
-    for(i=0;i<5;i++){
-        rot[i] = rotLeft(par[i],1);
+    for(x=0;x<5;x++){
+        rot[x] = rotLeft(par[x],1);
     }
-    //Sommo rot[x+1] + par[x-1], ma devo muovermi per colonne qui!
-    for(i=0;i<5;i++){
-        for(j=0;j<5;j++){
-            state[j][i] ^= rot[(i+1)%5] ^ par[(i-1+5)%5];
+    //Sommo rot[x+1] + par[x-1]
+    for(x=0;x<5;x++){
+        for(y=0;y<5;y++){
+            state[y][x] ^= rot[(x+1)%5] ^ par[(x-1+5)%5];
         }
     }
 }
 
 void Keccak_f_Rho(uint64_t state[5][5]){
-    int i,j;
-    for(i=0;i<5;i++)
-        for(j=0;j<5;j++)
-            state[i][j] = rotLeft(state[i][j], rotOffset[i][j]);
+    int y,x;
+    for(y=0;y<5;y++)
+        for(x=0;x<5;x++)
+            state[y][x] = rotLeft(state[y][x], rotOffset[y][x]);
 }
 
 void Keccak_f_Pi(uint64_t state[5][5]){
-    int i,j;
+    int y,x;
     uint64_t tempState[5][5];
-    for(i=0;i<5;i++)
-        for(j=0;j<5;j++)
-            tempState[(i*2 + 3*j)%5][j] = state[j][i];
+    for(y=0;y<5;y++)
+        for(x=0;x<5;x++)
+            //Qui vengono scambiate y e x perchè è la trasformazione che lo richiede
+            tempState[(x*2 + 3*y)%5][y] = state[y][x];
     memcpy(state,tempState,200);
 }
 
 void Keccak_f_Chi(uint64_t state[5][5]){
-    int i,j;
+    int y,x;
     uint64_t tempState[5][5];
-    for(i=0;i<5;i++)
-        for(j=0;j<5;j++)
-            tempState[i][j] = state[i][j] ^ ((~state[i][(j+1)%5]) & state[i][(j+2)%5]);
+    for(y=0;y<5;y++)
+        for(x=0;x<5;x++)
+            tempState[y][x] = state[y][x] ^ ((~state[y][(x+1)%5]) & state[y][(x+2)%5]);
     memcpy(state,tempState,200);
 }
 
@@ -139,8 +187,8 @@ void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutpu
     paddedInput = calloc(paddedInputLen,1);
     padding = calloc(padSize,1);
 
-    //Il padding di SHA3 dato dal Nist dovrebbe essere in poch parole M||01||10*1
-    //Nel caso di un solo byte: 01100001 --> 0x61. Qui entra in gioco il bit ordeing: il byte 0x61 viene scritto in memoria a partire dal bit meno significativo 10000110 e il C lo legge come 0x61, ma io voglio la stringa di bit esatta, quindi devo girarlo al contrario come 0x86.
+    //Il padding di SHA3 dato dal Nist dovrebbe essere M||01||10*1
+    //Nel caso di un solo byte: 01100001 --> 0x61. Qui entra in gioco il bit ordering: il byte 0x61 viene scritto in memoria a partire dal bit meno significativo 10000110 e il C lo legge come 0x61, ma io voglio la stringa di bit esatta, quindi devo girarlo al contrario come 0x86.
     if(padSize == 1)
         padding[0] = SHA3PAD?0x86:0x81;
     else{
