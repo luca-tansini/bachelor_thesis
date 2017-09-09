@@ -3,9 +3,14 @@
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
 //Generazione di tutti i trails con due soli bit in colonna
-//Sfruttando la proprietà per cui shiftare l'intero stato sull'asse z genera stati equivalenti dovrebbero essere solo 50 gli stati possibili
+//Sfruttando la proprietà per cui shiftare l'intero stato sull'asse z genera stati equivalenti sono solo 50 gli stati possibili
 int main(int argc, char const *argv[]) {
 
+    printf("Generazione di tutti i 3RoundTrails con due soli bit attivi, posizionati nella stessa colonna.\n");
+    printf("Sfruttando la proprietà per cui shiftare l'intero stato sull'asse z genera stati equivalenti sono solo 50 gli stati possibili.\n\n");
+    printf("Premere un tasto per iniziare...\n\n");
+    getchar();
+    
     uint64_t state[5][5];
     uint64_t trailState[5][5];
     int i,j,k,weight;

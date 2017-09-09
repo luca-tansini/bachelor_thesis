@@ -7,7 +7,7 @@ int main(int argc, char const *argv[]) {
     uint64_t state[5][5];
 
     if(argc != 2){
-        printf("Error! usage:Test3RoundTrail <first_trail_state_input>\n");
+        printf("Error! usage:TestVortex <first_trail_state_input>\n");
         exit(1);
     }
 
@@ -22,6 +22,7 @@ int main(int argc, char const *argv[]) {
     fclose(fp);
 
     PrintTrailState(state);
+    Keccak_f_Rho(state);
     Keccak_f_Pi(state);
     PrintTrailState(state);
 

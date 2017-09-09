@@ -159,3 +159,11 @@ void VerbosePropagate3RoundTrail(uint64_t trailState[5][5], int backwardExtended
     printf("peso: %d\n\n", weight);
     *totalWeight += weight;
 }
+
+int mod(int n, int m){
+    if(m <= 1)
+        return 0;
+    while(n < 0)
+        n += m;
+    return (n%m);
+}

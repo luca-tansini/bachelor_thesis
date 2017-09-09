@@ -12,9 +12,11 @@ int main(int argc, char const *argv[]) {
     int x,y,z,y1;
     char sep[87];
 
-    printf("Generazione di tutti i trails con 4bit attivi ed esattamente 0 o 2 bit attivi in ogni colonna.\nSolamente i trail con peso <= 50 vengono stampati\n");
-    printf("Gli stati in esame sono esattamente (64 * 50) * (64*50 - 10) = 10208000\n");
-
+    printf("Generazione di tutti i 3RoundTrails con 4bit attivi ed esattamente 0 o 2 bit attivi in ogni colonna.\nSolamente i trail con peso <= 50 vengono stampati\n");
+    printf("Gli stati in esame sono esattamente (64 * 50) * (64*50 - 10) = 10208000\n\n");
+    printf("Premere un tasto per iniziare...\n\n");
+    getchar();
+    
     memset(sep, '*', 86);
     sep[86] = 0;
     memset(state, 0, 200);
