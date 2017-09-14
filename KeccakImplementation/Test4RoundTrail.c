@@ -2,12 +2,13 @@
 
 int main(int argc, char const *argv[]) {
 
-    FILE *fp;
-    int i,j;
     uint64_t state[5][5];
+    int i,j,weight;
+    int backwardExtended;
+    FILE *fp;
 
     if(argc != 2){
-        printf("Error! usage:TestVortex <first_trail_state_input>\n");
+        printf("Error! usage:Test4RoundTrail <first_trail_state_input>\n");
         exit(1);
     }
 
@@ -19,12 +20,12 @@ int main(int argc, char const *argv[]) {
     for(i=0;i<5;i++)
         for(j=0;j<5;j++)
             fscanf(fp,"%lx", &state[i][j]);
+    fscanf(fp,"%d",&backwardExtended);
     fclose(fp);
 
-    PrintTrailState(state);
-    Keccak_f_Rho(state);
-    Keccak_f_Pi(state);
-    PrintTrailState(state);
+    VerboseForwardPropagateNRoundTrail(state,4, backwardExtended, &weight);
+
+    printf("\nPeso totale: %d\n", weight);
 
     return 0;
 }

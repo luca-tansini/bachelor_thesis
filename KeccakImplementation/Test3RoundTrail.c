@@ -23,7 +23,7 @@ int main(int argc, char const *argv[]) {
     fscanf(fp,"%d",&backwardExtended);
     fclose(fp);
 
-    VerbosePropagate3RoundTrail(state, backwardExtended, &weight);
+    VerboseForwardPropagateNRoundTrail(state,3, backwardExtended, &weight);
 
     printf("\nPeso totale: %d\n", weight);
 

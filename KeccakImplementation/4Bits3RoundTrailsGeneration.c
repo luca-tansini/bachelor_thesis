@@ -16,7 +16,7 @@ int main(int argc, char const *argv[]) {
     printf("Gli stati in esame sono esattamente (64 * 50) * (64*50 - 10) = 10208000\n\n");
     printf("Premere un tasto per iniziare...\n\n");
     getchar();
-    
+
     memset(sep, '*', 86);
     sep[86] = 0;
     memset(state, 0, 200);
@@ -37,11 +37,11 @@ int main(int argc, char const *argv[]) {
                                 for(y1=1;y+y1<5;y1++){
                                     state[y+y1][x] ^= 0x01UL << z;
                                     memcpy(tmpState, state, 200);
-                                    Propagate3RoundTrail(tmpState, 0, &weight);
+                                    ForwardPropagateNRoundTrail(tmpState, 3, 0, &weight);
                                     if(weight <= 50){
                                         printf(ANSI_COLOR_RED"%s\n"ANSI_COLOR_RESET,sep);
                                         memcpy(tmpState, state, 200);
-                                        VerbosePropagate3RoundTrail(tmpState, 0, &weight);
+                                        VerboseForwardPropagateNRoundTrail(tmpState, 3, 0, &weight);
                                         printf("Peso totale: %d\n", weight);
                                         printf(ANSI_COLOR_RED"%s\n"ANSI_COLOR_RESET,sep);
                                     }

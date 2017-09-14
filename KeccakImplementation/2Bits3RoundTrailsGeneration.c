@@ -10,7 +10,7 @@ int main(int argc, char const *argv[]) {
     printf("Sfruttando la proprietà per cui shiftare l'intero stato sull'asse z genera stati equivalenti sono solo 50 gli stati possibili.\n\n");
     printf("Premere un tasto per iniziare...\n\n");
     getchar();
-    
+
     uint64_t state[5][5];
     uint64_t trailState[5][5];
     int i,j,k,weight;
@@ -27,7 +27,7 @@ int main(int argc, char const *argv[]) {
                 state[j+k][i] = 1;
                 memcpy(trailState, state, 200);
                 printf(ANSI_COLOR_RED"%s\n"ANSI_COLOR_RESET,sep);
-                VerbosePropagate3RoundTrail(trailState, 0, &weight);
+                VerboseForwardPropagateNRoundTrail(trailState,3,0, &weight);
                 printf("Peso totale: %d\n", weight);
                 printf(ANSI_COLOR_RED"%s\n"ANSI_COLOR_RESET,sep);
                 state[j+k][i] = 0;
