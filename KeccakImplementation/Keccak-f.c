@@ -89,8 +89,8 @@ uint64_t rotLeft(uint64_t x, int n) {
 //In theta lavoro per colonne, quindi ciclo prima su x
 void Keccak_f_Theta(uint64_t state[5][5]){
     int y,x;
-
     uint64_t par[5],rot[5];
+
     //Precomputo la parità di tutte le colonne in par
     for(x=0;x<5;x++){
         par[x] = 0;

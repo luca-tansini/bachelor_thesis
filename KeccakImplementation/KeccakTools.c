@@ -148,3 +148,62 @@ int mod(int n, int m){
         n += m;
     return (n%m);
 }
+
+uint64_t inversePositions64[5] = {
+    0xDE26BC4D789AF134ULL,
+    0x09AF135E26BC4D78ULL,
+    0xEBC4D789AF135E26ULL,
+    0x7135E26BC4D789AFULL,
+    0xCD789AF135E26BC4ULL };
+
+void Keccak_f_InverseTheta(uint64_t state[5][5]){
+    int x,y,z,xOff;
+    uint64_t C[5];
+    uint64_t inversePositions[5];
+    for(x=0; x<5; x++) {
+        C[x] = state[0][x];
+        for(y=1; y<5; y++){
+            C[x] ^= state[y][x];
+        }
+    }
+
+    for(x=0; x<5; x++)
+        inversePositions[x] = inversePositions64[x];
+
+    for(z=0; z<64; z++){
+        for(xOff=0; xOff<5; xOff++)
+           for(x=0; x<5; x++)
+               for(y=0; y<5; y++){
+                    if((inversePositions[xOff] & (0x01UL << z)) != 0x0UL)
+                        state[y][x] ^= C[mod(x-xOff,5)];
+                }
+        for(xOff=0; xOff<5; xOff++) {
+            C[xOff]=rotLeft(C[xOff], 1);
+        }
+    }
+}
+
+void Keccak_f_InverseRho(uint64_t state[5][5]){
+    int y,x;
+    for(y=0;y<5;y++)
+        for(x=0;x<5;x++)
+            state[y][x] = rotLeft(state[y][x], mod(-rotOffset[y][x],64));
+}
+
+void Keccak_f_InversePi(uint64_t state[5][5]){
+    uint64_t tmpState[5][5];
+    int x,y,X,Y;
+    for(X=0; X<5; X++)
+        for(Y=0; Y<5; Y++) {
+            x = (1*X + 3*Y)%5;
+            y = (1*X + 0*Y)%5;
+            tmpState[y][x] = state[Y][X];
+        }
+    memcpy(state,tmpState,200);
+}
+
+void InverseLambda(uint64_t state[5][5]){
+    Keccak_f_InversePi(state);
+    Keccak_f_InverseRho(state);
+    Keccak_f_InverseTheta(state);
+}
