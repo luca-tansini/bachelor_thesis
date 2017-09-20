@@ -157,7 +157,7 @@ void Keccak_f(uint64_t state[5][5], int round){
     Keccak_f_Iota(state,round);
 }
 
-void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutputLen, uint SHA3PAD){
+void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutputLen, uint PADTYPE){
 
     uint64_t state[5][5];
     int i,j;
@@ -187,12 +187,34 @@ void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutpu
     paddedInput = calloc(paddedInputLen,1);
     padding = calloc(padSize,1);
 
-    //Il padding di SHA3 dato dal Nist dovrebbe essere M||01||10*1
+    //Il padding di SHA3 dato dal Nist è:
+    //    -per SHA3   M||01||10*1
+    //    -per SHAKE  M||1111||10*1
     //Nel caso di un solo byte: 01100001 --> 0x61. Qui entra in gioco il bit ordering: il byte 0x61 viene scritto in memoria a partire dal bit meno significativo 10000110 e il C lo legge come 0x61, ma io voglio la stringa di bit esatta, quindi devo girarlo al contrario come 0x86.
     if(padSize == 1)
-        padding[0] = SHA3PAD?0x86:0x81;
+        switch (PADTYPE) {
+            //standard Keccak 10*1 padding
+            case 0: padding[0] = 0x81;
+                    break;
+            //padding per SHA3
+            case 1: padding[0] = 0x86;
+                    break;
+            //padding per SHAKE
+            case 2: padding[0] = 0x9F;
+                    break;
+        }
     else{
-        padding[0] = SHA3PAD?0x06:0x01;
+        switch (PADTYPE) {
+            //standard Keccak 10*1 padding
+            case 0: padding[0] = 0x01;
+                    break;
+            //padding per SHA3
+            case 1: padding[0] = 0x06;
+                    break;
+            //padding per SHAKE
+            case 2: padding[0] = 0x1F;
+                    break;
+        }
         for(i=1; i<padSize-1; i++){
             padding[i] = 0x00;
         }

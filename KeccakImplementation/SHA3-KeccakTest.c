@@ -2,13 +2,12 @@
 
 int main(){
 
-    int i;
-    char input[1024]; //massimo 1024 caratteri in input
+    int i,requiredOutputLen;
+    char input[1024];  //massimo 1024 caratteri in input
+    char output[1024]; //massimo 1024 caratteri in output
 
     printf("Inserisci messaggio in input: ");
     gets(input);
-
-    char *output = malloc(64);
 
     printf("SHA3_224:\n");
     SHA3_224(input, strlen(input), output);
@@ -55,6 +54,21 @@ int main(){
     printf("Keccak_512:\n");
     Keccak_512(input, strlen(input), output);
     for(i=0;i<512/8;i++)
+        printf("%02hhx",output[i]);
+    printf("\n\n");
+
+    printf("Che dimensione in bit vuoi per l'output per le XOF(SHAKE128 e SHAKE256)? (max 8192):\n");
+    scanf("%d", &requiredOutputLen);
+
+    printf("SHAKE128:\n");
+    SHAKE128(input, strlen(input), output, requiredOutputLen);
+    for(i=0;i<requiredOutputLen/8;i++)
+        printf("%02hhx",output[i]);
+    printf("\n\n");
+
+    printf("SHAKE256:\n");
+    SHAKE256(input, strlen(input), output, requiredOutputLen);
+    for(i=0;i<requiredOutputLen/8;i++)
         printf("%02hhx",output[i]);
     printf("\n\n");
 

@@ -2,60 +2,62 @@
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
-//Generazione di tutti i trails con 4bit attivi ed ogni colonna ha esattamente 0 o 2 bit attivi. Solamente i trail con peso <= 50 vengono stampati
-//Gli stati possibili sono esattamente (64 * 50) * (64*50 - 10) = 10208000
+//Generazione di tutti gli stati con 4bit attivi ed esattamente 0 o 2 bit attivi in ogni colonna.
 int main(int argc, char const *argv[]) {
 
     uint64_t state[5][5];
     uint64_t tmpState[5][5];
-    int i,j,k,l,weight;
-    int x,y,z,y1;
+    int x,y,yOff,weight,count=0;
+    int x1,y1,z1,y1Off;
     char sep[87];
-
-    printf("Generazione di tutti i 3RoundTrails con 4bit attivi ed esattamente 0 o 2 bit attivi in ogni colonna.\nSolamente i trail con peso <= 50 vengono stampati\n");
-    printf("Gli stati in esame sono esattamente (64 * 50) * (64*50 - 10) = 10208000\n\n");
+    printf("Generazione di tutti gli stati con 4bit attivi ed esattamente 0 o 2 bit attivi in ogni colonna.\n");
     printf("Premere un tasto per iniziare...\n\n");
     getchar();
 
     memset(sep, '*', 86);
     sep[86] = 0;
     memset(state, 0, 200);
+    int weights[128] = {0};
 
-    for(l=0;l<64;l++){
-        for(i=0;i<5;i++){
-            for(j=0;j<4;j++){
-                state[j][i] = 0x01UL<<l;
-                for(k=1;j+k<5;k++){
-                    state[j+k][i] = 0x01UL << l;
-                    for(z=0;z<64;z++){
-                        for(x=0;x<5;x++){
-                            //Se sto considerando la stessa colonna del ciclo esterno skippa
-                            if(z==l && x==i)
-                                continue;
-                            for(y=0;y<4;y++){
-                                state[y][x] ^= 0x01UL<<z;
-                                for(y1=1;y+y1<5;y1++){
-                                    state[y+y1][x] ^= 0x01UL << z;
+    for(x=0;x<5;x++){
+        for(y=0;y<4;y++){
+            state[y][x] = 0x01UL;
+            for(yOff=1;y+yOff<5;yOff++){
+                state[y+yOff][x] = 0x01UL;
+                for(z1=0;z1<64;z1++){
+                    for(x1=x;x1<5;x1++){
+                        if(x==x1 && z1==0)
+                            continue;
+                        for(y1=0;y1<4;y1++){
+                            state[y1][x1] ^= 0x01UL<<z1;
+                            for(y1Off=1;y1+y1Off<5;y1Off++){
+                                state[y1+y1Off][x1] ^= 0x01UL << z1;
+                                memcpy(tmpState, state, 200);
+                                ForwardPropagateNRoundTrail(tmpState, 3, 0, &weight);
+                                weights[weight]++;
+                                if(weight < 50){
+                                    printf(ANSI_COLOR_RED"%s\n"ANSI_COLOR_RESET,sep);
                                     memcpy(tmpState, state, 200);
-                                    ForwardPropagateNRoundTrail(tmpState, 3, 0, &weight);
-                                    if(weight <= 50){
-                                        printf(ANSI_COLOR_RED"%s\n"ANSI_COLOR_RESET,sep);
-                                        memcpy(tmpState, state, 200);
-                                        VerboseForwardPropagateNRoundTrail(tmpState, 3, 0, &weight);
-                                        printf("Peso totale: %d\n", weight);
-                                        printf(ANSI_COLOR_RED"%s\n"ANSI_COLOR_RESET,sep);
-                                    }
-                                    state[y+y1][x] ^= 0x01UL << z;
+                                    VerboseForwardPropagateNRoundTrail(tmpState, 3, 0, &weight);
+                                    printf("Peso totale: %d\n", weight);
+                                    printf(ANSI_COLOR_RED"%s\n"ANSI_COLOR_RESET,sep);
                                 }
-                                state[y][x] ^= 0x01UL<<z;
+                                count++;
+                                state[y1+y1Off][x1] ^= 0x01UL << z1;
                             }
+                            state[y1][x1] ^= 0x01UL<<z1;
                         }
                     }
-                    state[j+k][i] = 0;
                 }
-                state[j][i] = 0;
+                state[y+yOff][x] = 0;
             }
+            state[y][x] = 0;
         }
     }
+
+    printf("Stati esaminati: %d\n", count);
+    for(x=0;x<128;x++)
+        if(weights[x]>0)
+            printf("Numero di 3-RoundTrails di peso %d: %d\n",x,weights[x]);
     return 0;
 }

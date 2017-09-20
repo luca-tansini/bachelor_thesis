@@ -202,8 +202,36 @@ void Keccak_f_InversePi(uint64_t state[5][5]){
     memcpy(state,tmpState,200);
 }
 
+void Keccak_f_InverseChi(uint64_t state[5][5]){
+    int y,x,X;
+    uint64_t C[5];
+
+    for(y=0; y<5; y++) {
+        memset(C,0,40);
+        for(x=0; x<5; x++)
+            C[x] = state[y][x];
+        for(x=0; x<(3*(5-1)/2); x++) {
+            X = (5-2)*x;
+            state[y][mod(X,5)] = C[mod(X,5)] ^ (state[y][mod(X+2,5)] & (~C[mod(X+1,5)]));
+        }
+    }
+}
+
+
 void InverseLambda(uint64_t state[5][5]){
     Keccak_f_InversePi(state);
     Keccak_f_InverseRho(state);
     Keccak_f_InverseTheta(state);
+}
+
+void BackwardPropagateNRoundTrail(uint64_t trailState[5][5],int rounds,int *totalWeight){
+
+    int weight, revWeight,i;
+
+    *totalWeight=0;
+    for(i=0;i<rounds;i++){
+        InverseLambda(trailState);
+        getStateWeights(trailState,&weight, &revWeight);
+        *totalWeight += revWeight;
+    }
 }

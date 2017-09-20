@@ -31,3 +31,11 @@ void Keccak_384(char *input, uint inputLen, char *output){
 void Keccak_512(char *input, uint inputLen, char *output){
     Keccak(576, input, inputLen, output, 512/8, 0);
 }
+
+void SHAKE128(char *input, uint inputLen, char *output, int requiredOutputLen){
+    Keccak(1344, input, inputLen, output, requiredOutputLen/8, 2);
+}
+
+void SHAKE256(char *input, uint inputLen, char *output, int requiredOutputLen){
+    Keccak(1088, input, inputLen, output, requiredOutputLen/8, 2);
+}
