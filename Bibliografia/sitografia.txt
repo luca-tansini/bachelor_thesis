@@ -1,4 +1,0 @@
-http://keccak.noekeon.org/
-http://sponge.noekeon.org/
-https://github.com/gvanas/KeccakCodePackage #implementazione
-http://keccak.noekeon.org/crunchy_contest.html #competition

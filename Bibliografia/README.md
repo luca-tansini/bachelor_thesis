@@ -1,1 +1,0 @@
-Repository per la Tesi su Keccak, il vincitore della competizione SHA3
