@@ -13,7 +13,6 @@ int main(int argc, char const *argv[]) {
                 for(y2=0;y2<5;y2++){
                     if(y2==y0)
                         continue;
-                    //Per la stessa questione spiegata in Keccak-f.c, la tabella rotOffset va letta con gli indici y e x invertiti
                     tmp = rotOffset[y0][x0] - rotOffset[y2][x0] + rotOffset[y2][x2] - rotOffset[y0][x2];
                     printf("tmp: %d\n", tmp);
                     if(tmp % 64 == 0){

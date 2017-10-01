@@ -2,7 +2,7 @@
 Nella seguente implementazione di Keccak-f vengono usati i prametri standard degli algoritmi SHA3 del NIST:
     l = 6 --> b = 1600 --> #round = 24
     segue che r + c deve essere 1600 e per comodità assumiamo che r sia multiplo di 8bit
-Quindi al momento lo stato è rappresentato da una matrice 5x5 di uint64_t, che in alcune situazioni (tipo l'input e l'output) verrà utilizzato come 200 byte consecutivi di caratteri ASCII.
+Quindi lo stato è rappresentato da una matrice 5x5 di uint64_t, che in alcune situazioni (come l'input e l'output) verrà utilizzato come 200 byte consecutivi di caratteri ASCII.
 
 
 ***********************************************
@@ -141,19 +141,14 @@ void Keccak_f_Iota(uint64_t state[5][5], int round){
 
 void Keccak_f(uint64_t state[5][5], int round){
 
-    //Theta
     Keccak_f_Theta(state);
 
-    //Rho
     Keccak_f_Rho(state);
 
-    //Pi
     Keccak_f_Pi(state);
 
-    //Chi
     Keccak_f_Chi(state);
 
-    //Iota
     Keccak_f_Iota(state,round);
 }
 
@@ -180,7 +175,7 @@ void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutpu
     //Se il padSize è 0 significa che:
     //  -il blocco in input è vuoto
     //  -il blocco in input è di esattamente r bit
-    //In ogni caso quello che devo fare è aggiungere un intero blocco di r bit di padding
+    //In entrambi i casi quello che devo fare è aggiungere un intero blocco di r bit di padding
     if(padSize == 0)
         padSize = r/8;
     paddedInputLen = inputLen + padSize;

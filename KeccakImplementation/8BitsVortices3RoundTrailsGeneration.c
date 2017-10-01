@@ -1,6 +1,5 @@
 #include "KeccakTools.c"
 
-//Per la stessa questione spiegata in Keccak-f.c, la tabella rotOffset va letta con gli indici y e x invertiti
 int getDepth(int x0, int y0, int x2, int y2, int x4, int y4, int x6, int y6){
     int depth;
     depth = rotOffset[y0][x0] + rotOffset[y2][x2] + rotOffset[y4][x4] + rotOffset[y6][x6];
@@ -17,7 +16,7 @@ int main(int argc, char const *argv[]) {
     uint64_t state[5][5];
     uint64_t trailState[5][5];
 
-    printf("Generazione di tutti i 3RoundTrails basati su Kernel-Vortex da 8Bit.\n");
+    printf("Generazione di tutti i 3RoundTrails basati su Kernel Vortex da 8Bit.\n");
     printf("Premere un tasto per iniziare...\n\n");
     getchar();
 

@@ -3,8 +3,8 @@
 int main(){
 
     int i,requiredOutputLen;
-    char input[1024];  //massimo 1024 caratteri in input
-    char output[1024]; //massimo 1024 caratteri in output
+    char input[1024];
+    char output[1024];
 
     printf("Inserisci messaggio in input: ");
     gets(input);
@@ -57,7 +57,7 @@ int main(){
         printf("%02hhx",output[i]);
     printf("\n\n");
 
-    printf("Che dimensione in bit vuoi per l'output per le XOF(SHAKE128 e SHAKE256)? (max 8192):\n");
+    printf("Che dimensione in bit vuoi per l'output per le XOF(SHAKE128 e SHAKE256)?   ");
     scanf("%d", &requiredOutputLen);
 
     printf("SHAKE128:\n");
