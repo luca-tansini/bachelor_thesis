@@ -12,7 +12,7 @@ int main(int argc, char const *argv[]) {
 	int i,cont=0;
 	int weights[512] = {0};
 	
-	printf("Generazione di tutti i 3RoundTrails basati su Kernel-Vortex da 6Bit.\n");
+	printf("Generazione di tutti i 3RoundTrails basati su stati da 6Bit, disposti due a due in colonna.\n");
 	printf("Premere un tasto per iniziare...\n\n");
 	getchar();
 	
@@ -45,14 +45,15 @@ int main(int argc, char const *argv[]) {
 					for(y4Off=y4+1;y4Off<5;y4Off++){
 						if((y4Off==y0||y4Off==y0Off) && x4==x0 && z4==0) continue;
 						if((y4Off==y2||y4Off==y2Off) && x4==x2 && z4==z2) continue;
-						//CORPO DA ESEGUIRE
+						
 						state[y0][x0] ^= 0x01UL;
 						state[y0Off][x0] ^= 0x01UL;
 						state[y2][x2] ^= 0x01UL << z2;
 						state[y2Off][x2] ^= 0x01UL << z2;
 						state[y4][x4] ^= 0x01UL << z4;
 						state[y4Off][x4] ^= 0x01UL << z4;
-						//COSE
+						
+						//PROPAGAZIONE
 						memcpy(tmpState,state,200);
 						ForwardPropagateNRoundTrail(tmpState,3,0,&weight);
 						#pragma omp atomic
@@ -68,8 +69,8 @@ int main(int argc, char const *argv[]) {
 						}
 						#pragma omp atomic
 						weights[weight]++;
+						//FINE PROPAGAZIONE
 						
-						//FINE COSE
 						state[y0][x0] ^= 0x01UL;
 						state[y0Off][x0] ^= 0x01UL;
 						state[y2][x2] ^= 0x01UL << z2;

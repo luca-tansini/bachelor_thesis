@@ -23,11 +23,12 @@ int main(int argc, char const *argv[]) {
      for(x0=0;x0<5;x0++){
       for(y2=0;y2<5;y2++){
           if(y0 == y2) continue;
-       for(x2=x0;x2<5;x2++){
+       for(x2=x0+1;x2<5;x2++){
         for(y4=0;y4<5;y4++){
             if(y0 == y4) continue;
             if(y2 == y4) continue;
-         for(x4=x2;x4<5;x4++){
+         for(x4=x2+1;x4<5;x4++){
+	    cont++;
             if(mod(getDepth(x0,y0,x2,y2,x4,y4),64) == 0){
                 z0 = 0;
                 z2 = z0 + rotOffset[y2][x0] - rotOffset[y2][x2];
@@ -35,12 +36,7 @@ int main(int argc, char const *argv[]) {
                 z4 = z0 + rotOffset[y0][x0] - rotOffset[y0][x4];
                 z4 = mod(z4,64);
 
-                if(x0 == x2 && z0 == z2) continue;
-                if(x0 == x4 && z0 == z4) continue;
-                if(x2 == x4 && z2 == z4) continue;
-
-                cont++;
-                printf("Vortex #%d\nL'equazione ha soluzione per le coppie (%d,%d), (%d,%d) e (%d,%d)\n",cont,y0,x0,y2,x2,y4,x4);
+                printf("L'equazione ha soluzione per le coppie (y,x) (%d,%d), (%d,%d) e (%d,%d)\n",y0,x0,y2,x2,y4,x4);
                 printf("z0=0;z2=%d;z4=%d\n",z2,z4);
                 memset(state,0,200);
                 state[y0][x0] ^= 0x01UL << z0;
@@ -58,6 +54,7 @@ int main(int argc, char const *argv[]) {
       }
      }
     }
+    printf("Numero di stati generati: %d\n\n",cont);
     for(i=0;i<80;i++)
         if(weights[i])
             printf(" numero di vortici di peso %d: %d\n",i, weights[i]);

@@ -46,7 +46,6 @@ void PrintTrailState(uint64_t state[5][5]){
     printf("\n");
 }
 
-//Per quanto riguarda la coordinata z ricorda che il bit più significativo dei 64 è quello con z=0
 void getRow(uint64_t state[5][5], int y, int z, uint64_t *row){
 
     int x;
@@ -57,7 +56,7 @@ void getRow(uint64_t state[5][5], int y, int z, uint64_t *row){
         return;
 
     for(x=0;x<5;x++){
-        tmp = ((state[y][x] & (0x1UL << (63-z))) >> (63-z));
+        tmp = ((state[y][x] & (0x1UL <<z)) >> z);
         *row ^= tmp << (4-x);
     }
 }
@@ -69,12 +68,12 @@ int getRowWeight(uint64_t row){
     return weightTable[row];
 }
 
-int getRevRowWeight(uint64_t row){
+int getRowRevWeight(uint64_t row){
     return revWeightTable[row];
 }
 
 //Funzione che calcola il restriction weight e il rev weight di uno stato sommando i pesi delle righe.
-//Sfrutta le lookup table costruite da me sopra (si spera giuste)
+//Sfrutta le lookup table weightTable e revWeightTable
 void getStateWeights(uint64_t state[5][5], int *weight, int *revWeight){
     int y,z;
     uint64_t tmpRow;
@@ -84,27 +83,35 @@ void getStateWeights(uint64_t state[5][5], int *weight, int *revWeight){
         for(z=0;z<64;z++){
             getRow(state,y,z,&tmpRow);
             *weight += getRowWeight(tmpRow);
-            *revWeight += getRevRowWeight(tmpRow);
+            *revWeight += getRowRevWeight(tmpRow);
         }
 }
 
-//Funzione che prende in input il primo stato di un trail e lo propaga in avanti per N Round calcolandone il peso
-//backwardExtended indica se il primo stato rappresenta a0, cioè il trail prima di λ0 o b0, cioè il trail prima di X0, poichè a0 può essere recuperato applicando λ inversa
+//Funzione che prende in input il primo differenziale di un trail e lo propaga in avanti per N Round calcolandone il peso
+//Il parametro backwardExtended indica se il primo stato rappresenta a0, cioè il trail prima di λ0 oppure b0, cioè il trail prima di χ0
+//I trail generati sono χ-zero, ovvero χ viene considerata come funzione identità e di conseguenza non applicata. Quando il cammino raggiunge χ viene calcolato il peso del differenziale e sommato al totale.
 void ForwardPropagateNRoundTrail(uint64_t trailState[5][5],int rounds, int backwardExtended, int *totalWeight){
 
     int weight, revWeight,i;
-    //Apllico gli n round, tranne Chi che viene considerata identità e ne calcolo il peso e Iota che non fa nulla per i differenziali
+    //Apllica gli n round, tranne Chi che viene considerata identità e ne calcolo il peso e Iota che non fa nulla per i differenziali
+    
+    //Applicazione eventuale di λ0
     if(backwardExtended){
         Keccak_f_Theta(trailState);
         Keccak_f_Rho(trailState);
         Keccak_f_Pi(trailState);
     }
+    //Calcola del peso del cammino arrivato a χ0
     getStateWeights(trailState,&weight,&revWeight);
     *totalWeight = weight;
+    
+    //Propaga i restanti n-1 round del cammino
     for(i=1;i<rounds;i++){
+	//λi
         Keccak_f_Theta(trailState);
         Keccak_f_Rho(trailState);
         Keccak_f_Pi(trailState);
+	//Calcola il peso per χi
         getStateWeights(trailState,&weight,&revWeight);
         *totalWeight += weight;
     }

@@ -12,7 +12,7 @@ int main(int argc, char const *argv[]) {
     int x0,y0,x2,y2,x4,y4,x6,y6,cont=0;
     int z0,z2,z4,z6;
     int weight,i;
-    int weights[1024] = {0};
+    int weights[256] = {0};
     uint64_t state[5][5];
     uint64_t trailState[5][5];
 
@@ -24,13 +24,17 @@ int main(int argc, char const *argv[]) {
      for(x0=0;x0<5;x0++){
       for(y2=0;y2<5;y2++){
           if(y2==y0) continue;
-      for(x2=x0;x2<5;x2++){
+      for(x2=0;x2<5;x2++){
+	      if(x2==x0) continue;
        for(y4=0;y4<5;y4++){
            if(y4==y2) continue;
-        for(x4=x2;x4<5;x4++){
+        for(x4=x2+1;x4<5;x4++){
+	    if(x4==x2) continue;
          for(y6=0;y6<5;y6++){
             if(y6==y4 || y6==y0) continue;
-          for(x6=x4;x6<5;x6++){
+          for(x6=0;x6<5;x6++){
+		if(x6==x4 || x6==x0) continue;
+                cont++;
                 if(mod(getDepth(x0,y0,x2,y2,x4,y4,x6,y6),64) == 0){
                     z0 = 0;
                     z2 = z0 + rotOffset[y2][x0] - rotOffset[y2][x2];
@@ -40,14 +44,6 @@ int main(int argc, char const *argv[]) {
                     z6 = z0 + rotOffset[y0][x0] - rotOffset[y0][x6];
                     z6 = mod(z6,64);
 
-                    if(x0 == x2 && z0 == z2) continue;
-                    if(x0 == x6 && z0 == z6) continue;
-                    if(x2 == x4 && z2 == z4) continue;
-                    if(x4 == x6 && z4 == z6) continue;
-                    if(y0 == y4 && x0 == x4 && z0 == z4) continue;
-                    if(y2 == y6 && x2 == x6 && z2 == z6) continue;
-
-                    cont++;
                     memset(state,0,200);
                     state[y0][x0] ^= 0x01UL << z0;
                     state[y2][x0] ^= 0x01UL << z0;
@@ -60,7 +56,8 @@ int main(int argc, char const *argv[]) {
                     memcpy(trailState,state,200);
                     ForwardPropagateNRoundTrail(trailState,3,0,&weight);
                     weights[weight]++;
-                    if (weight<50){
+                    if (weight==46){
+			printf("Coppie (y,x): p0(%d,%d), p2(%d,%d), p4(%d,%d), p6(%d,%d)\n",y0,x0,y2,x2,y4,x4,y6,x6);
                         VerboseForwardPropagateNRoundTrail(state,3,0,&weight);
                         printf("Peso totale:%d\n\n", weight);
                     }
@@ -73,8 +70,8 @@ int main(int argc, char const *argv[]) {
       }
      }
     }
-    printf("Totale 8Bit Vortices trovati: %d\n",cont);
-    for(i=0;i<1024;i++)
+    printf("Totale stati generati: %d\n",cont);
+    for(i=0;i<256;i++)
         if(weights[i])
             printf(" numero di vortici di peso %d: %d\n",i, weights[i]);
     return 0;

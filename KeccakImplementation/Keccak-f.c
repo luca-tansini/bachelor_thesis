@@ -39,7 +39,7 @@ A:                                            *
 ***********************************************
 IMPORTANTE: Nella rappresentazione della matrice che ho scelto in C, risulta più comodo vedere lo stato memorizzato per colonne cioè scambiare x e y:
 
-A[x][y] = state[y][x];
+A[x][y] == state[y][x];
 
 Questo perchè in c un vettore bidimensionale A[5][5] viene salvato in memoria come:
 
@@ -161,6 +161,9 @@ void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutpu
         printf("Il bitrate deve essere minore di 1600 e multiplo di 8 bit!\n");
         return;
     }
+    
+    //Il parametro r è passato in bit, ma per comodità viene convertito in byte, poichè il controllo ci garantisce di lavorare con multipli di byte
+    r=r/8;
 
     //Inizializzazione stato a 0
     memset(state, 0, sizeof(state));
@@ -170,17 +173,17 @@ void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutpu
     unsigned char *paddedInput;
     unsigned char *padding;
 
-    padSize = ((r - inputLen*8 % r)%r)/8;
+    padSize = ((r - inputLen % r)%r);
 
     //Se il padSize è 0 significa che:
     //  -il blocco in input è vuoto
     //  -il blocco in input è di esattamente r bit
     //In entrambi i casi quello che devo fare è aggiungere un intero blocco di r bit di padding
     if(padSize == 0)
-        padSize = r/8;
+        padSize = r;
     paddedInputLen = inputLen + padSize;
-    paddedInput = calloc(paddedInputLen,1);
-    padding = calloc(padSize,1);
+    paddedInput = malloc(paddedInputLen);
+    padding = malloc(padSize);
 
     //Il padding di SHA3 dato dal Nist è:
     //    -per SHA3   M||01||10*1
@@ -220,9 +223,9 @@ void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutpu
     memcpy((paddedInput+inputLen), padding, padSize);
 
     //FASE DI ASSORBIMENTO
-    for(i=0; i<paddedInputLen/(r/8); i++){
-        for(j=0;j<r/8;j++){
-            ((char *)state)[j] ^= (paddedInput+(r/8)*i)[j];
+    for(i=0; i<paddedInputLen/r; i++){
+        for(j=0;j<r;j++){
+            ((char *)state)[j] ^= (paddedInput+r*i)[j];
         }
         for(j=0;j<24;j++){
             Keccak_f(state, j);
@@ -230,10 +233,10 @@ void Keccak(uint r, char *input, uint inputLen, char *output, uint requiredOutpu
     }
     //FASE DI SQUEEZING
     while(requiredOutputLen > 0){
-        if(requiredOutputLen > r/8){
-            memcpy(output, state, r/8);
-            output += r/8;
-            requiredOutputLen -= r/8;
+        if(requiredOutputLen > r){
+            memcpy(output, state, r);
+            output += r;
+            requiredOutputLen -= r;
             for(j=0;j<24;j++){
                 Keccak_f(state, j);
             }
