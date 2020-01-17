@@ -1,1 +1,1 @@
-Repository per la Tesi su Keccak, il vincitore della competizione SHA3
+Bachelor Degree thesis implementation of differential cryptanalysis techniques for Keccak, the SHA3 algorithm
