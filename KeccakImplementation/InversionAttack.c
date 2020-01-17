@@ -138,7 +138,13 @@ int main(int argc, char const *argv[]) {
     
     memcpy(stolenInput,victimState,200);
     
-    printf("Messaggio in chiaro: \"%s\"\n",stolenInput);
+    printf("Messaggio in chiaro:\""	);
+	
+	i=0;
+	while(stolenInput[i] != 0 && stolenInput[i] != 0x86 && stolenInput[i] != 0x06)
+		putchar(stolenInput[i++]);
+	
+	printf("\"\n");
 
     return 0;
 }
